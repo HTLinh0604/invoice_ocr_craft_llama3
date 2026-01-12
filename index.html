@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧾 OCR Receipt Scanner</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #764ba2;
+            --success: #48bb78;
+            --warning: #ed8936;
+            --danger: #f56565;
+            --dark: #2d3748;
+            --light: #f7fafc;
+            --gray: #718096;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .api-config {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .api-config label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .api-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .api-config input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .api-config input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-check {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-check:hover {
+            background: var(--primary-dark);
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .api-status.connected {
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            color: #22543d;
+        }
+
+        .api-status.disconnected {
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            color: #822727;
+        }
+
+        .api-status.checking {
+            background: linear-gradient(135deg, #fefcbf 0%, #faf089 100%);
+            color: #744210;
+        }
+
+        .models-status {
+            display: flex;
+            gap: 15px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .model-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            background: #e2e8f0;
+            color: var(--dark);
+        }
+
+        .model-badge.loaded {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            color: var(--dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title i {
+            color: var(--primary);
+        }
+
+        .upload-zone {
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #ebf4ff 0%, #e6fffa 100%);
+            transform: translateY(-2px);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #ebf4ff 0%, #c3dafe 100%);
+        }
+
+        .upload-zone i {
+            font-size: 4rem;
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        .upload-zone h3 {
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .upload-zone p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .preview-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .preview-container.show {
+            display: block;
+        }
+
+        .preview-image-wrapper {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .preview-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: var(--dark);
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--dark);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .loading-time {
+            margin-top: 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .results-container {
+            display: none;
+        }
+
+        .results-container.show {
+            display: block;
+        }
+
+        .processing-info {
+            background: linear-gradient(135deg, #ebf4ff 0%, #e6fffa 100%);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .processing-time {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .processing-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .missing-alert {
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+            border: 1px solid #fc8181;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .missing-alert h4 {
+            color: #c53030;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .missing-alert ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .missing-alert li {
+            background: #c53030;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: var(--gray);
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .result-section {
+            margin-bottom: 20px;
+        }
+
+        .result-section h4 {
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-field {
+            display: flex;
+            padding: 12px 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid var(--success);
+        }
+
+        .result-field.missing {
+            border-left-color: var(--danger);
+            background: #fff5f5;
+        }
+
+        .result-field .label {
+            font-weight: 600;
+            color: var(--dark);
+            min-width: 120px;
+        }
+
+        .result-field .value {
+            color: var(--gray);
+            flex: 1;
+        }
+
+        .result-field.missing .value {
+            color: var(--danger);
+            font-style: italic;
+        }
+
+        .missing-badge {
+            background: var(--danger);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: auto;
+        }
+
+        .line-items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .line-items-table th,
+        .line-items-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .line-items-table th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .line-items-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .annotated-image {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .raw-text {
+            background: #1a202c;
+            color: #a0aec0;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            display: none;
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            opacity: 0.8;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-receipt"></i> OCR Receipt Scanner</h1>
+            <p>Trích xuất thông tin hóa đơn thông minh</p>
+        </div>
+
+        <div class="api-config">
+            <label for="api-url">
+                <i class="fas fa-link"></i> Backend URL (Ngrok):
+            </label>
+            <div class="api-input-group">
+                <input type="text" id="api-url" placeholder="https://xxxx-xx-xxx-xxx-xxx.ngrok-free.app">
+                <button class="btn-check" onclick="checkApiConnection()">
+                    <i class="fas fa-plug"></i> Kết nối
+                </button>
+            </div>
+            <div id="api-status" class="api-status disconnected">
+                <i class="fas fa-circle"></i>
+                <span>Chưa kết nối</span>
+            </div>
+            <div id="models-status" class="models-status" style="display: none;">
+                <span class="model-badge" id="llama-status">🧠 LLaMA</span>
+                <span class="model-badge" id="craft-status">🔍 CRAFT</span>
+                <span class="model-badge" id="tesseract-status">📝 Tesseract</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-upload"></i> Tải ảnh lên
+                </h2>
+                
+                <div class="upload-zone" id="upload-zone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Kéo thả ảnh vào đây</h3>
+                    <p>hoặc click để chọn file</p>
+                    <p style="margin-top: 10px; font-size: 0.8rem;">Hỗ trợ: JPG, PNG, JPEG</p>
+                </div>
+                <input type="file" id="file-input" accept="image/*">
+
+                <div class="preview-container" id="preview-container">
+                    <h4 style="margin-bottom: 10px;"><i class="fas fa-image"></i> Ảnh đã chọn:</h4>
+                    <div class="preview-image-wrapper">
+                        <img id="preview-image" class="preview-image" src="" alt="Preview">
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="process-btn" onclick="processOCR()">
+                            <i class="fas fa-magic"></i> Xử lý OCR
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearImage()">
+                            <i class="fas fa-trash"></i> Xóa
+                        </button>
+                    </div>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p class="loading-text">Đang xử lý OCR...</p>
+                    <p class="loading-subtext">Models đã load sẵn, xử lý sẽ nhanh!</p>
+                    <p class="loading-time" id="loading-time">0.0s</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-file-alt"></i> Kết quả trích xuất
+                </h2>
+
+                <div id="empty-state" style="text-align: center; padding: 60px 20px; color: #a0aec0;">
+                    <i class="fas fa-inbox" style="font-size: 4rem; margin-bottom: 20px;"></i>
+                    <p>Chưa có kết quả. Hãy tải ảnh lên và nhấn "Xử lý OCR"</p>
+                </div>
+
+                <div class="results-container" id="results-container">
+                    <div class="processing-info" id="processing-info">
+                        <div>
+                            <span class="processing-time" id="result-time">0.0s</span>
+                            <span class="processing-label">thời gian xử lý</span>
+                        </div>
+                    </div>
+
+                    <div class="missing-alert" id="missing-alert" style="display: none;">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Thông tin bị thiếu</h4>
+                        <ul id="missing-list"></ul>
+                    </div>
+
+                    <div class="tabs">
+                        <div class="tab active" data-tab="extracted">
+                            <i class="fas fa-table"></i> Dữ liệu
+                        </div>
+                        <div class="tab" data-tab="image">
+                            <i class="fas fa-image"></i> Ảnh
+                        </div>
+                        <div class="tab" data-tab="raw">
+                            <i class="fas fa-code"></i> Text gốc
+                        </div>
+                    </div>
+
+                    <div class="tab-content active" id="tab-extracted">
+                        <div class="result-section">
+                            <h4><i class="fas fa-store"></i> Thông tin cửa hàng</h4>
+                            <div id="store-info"></div>
+                        </div>
+                        
+                        <div class="result-section">
+                            <h4><i class="fas fa-shopping-cart"></i> Sản phẩm</h4>
+                            <div id="line-items"></div>
+                        </div>
+
+                        <div class="result-section">
+                            <h4><i class="fas fa-money-bill-wave"></i> Tổng tiền</h4>
+                            <div id="total-info"></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-image">
+                        <img id="annotated-image" class="annotated-image" src="" alt="Annotated">
+                    </div>
+
+                    <div class="tab-content" id="tab-raw">
+                        <pre class="raw-text" id="raw-text"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Made with ❤️ to help you convert images to text easily, beautifully, and without any hassle.</p>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Elements
+        const apiUrlInput = document.getElementById('api-url');
+        const apiStatus = document.getElementById('api-status');
+        const modelsStatus = document.getElementById('models-status');
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+        const previewContainer = document.getElementById('preview-container');
+        const previewImage = document.getElementById('preview-image');
+        const processBtn = document.getElementById('process-btn');
+        const loading = document.getElementById('loading');
+        const loadingTime = document.getElementById('loading-time');
+        const emptyState = document.getElementById('empty-state');
+        const resultsContainer = document.getElementById('results-container');
+        const toast = document.getElementById('toast');
+
+        let selectedFile = null;
+        let apiUrl = '';
+        let loadingTimer = null;
+        let loadingSeconds = 0;
+
+        const fieldNames = {
+            'store_name': 'Tên cửa hàng',
+            'address': 'Địa chỉ',
+            'date': 'Ngày',
+            'staff_name': 'Nhân viên',
+            'staff_id': 'Mã NV',
+            'line_items': 'Sản phẩm',
+            'total': 'Tổng tiền'
+        };
+
+        // Check API Connection
+        async function checkApiConnection() {
+            apiUrl = apiUrlInput.value.trim();
+            if (!apiUrl) {
+                updateApiStatus('disconnected', 'Vui lòng nhập URL');
+                return;
+            }
+
+            // Ensure URL has protocol
+            if (!apiUrl.startsWith('http')) {
+                apiUrl = 'https://' + apiUrl;
+                apiUrlInput.value = apiUrl;
+            }
+
+            updateApiStatus('checking', 'Đang kiểm tra...');
+            modelsStatus.style.display = 'none';
+
+            try {
+                const response = await fetch(`${apiUrl}/api/health`, {
+                    method: 'GET',
+                    headers: { 'ngrok-skip-browser-warning': 'true' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateApiStatus('connected', `Đã kết nối! Server: ${data.status}`);
+                    
+                    // Show models status
+                    if (data.models) {
+                        modelsStatus.style.display = 'flex';
+                        document.getElementById('llama-status').className = 
+                            `model-badge ${data.models.llama === 'loaded' ? 'loaded' : ''}`;
+                        document.getElementById('craft-status').className = 
+                            `model-badge ${data.models.craft === 'loaded' ? 'loaded' : ''}`;
+                        document.getElementById('tesseract-status').className = 
+                            `model-badge ${data.models.tesseract === 'loaded' ? 'loaded' : ''}`;
+                    }
+                    
+                    showToast('Kết nối thành công! Models đã sẵn sàng.', 'success');
+                } else {
+                    updateApiStatus('disconnected', 'Server không phản hồi');
+                }
+            } catch (error) {
+                updateApiStatus('disconnected', `Lỗi: ${error.message}`);
+                showToast('Không thể kết nối. Kiểm tra URL.', 'error');
+            }
+        }
+
+        function updateApiStatus(status, message) {
+            apiStatus.className = `api-status ${status}`;
+            const icon = status === 'connected' ? 'check-circle' : 
+                         status === 'checking' ? 'spinner fa-spin' : 'times-circle';
+            apiStatus.innerHTML = `<i class="fas fa-${icon}"></i><span>${message}</span>`;
+        }
+
+        // Upload handling
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showToast('Vui lòng chọn file ảnh!', 'error');
+                return;
+            }
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewContainer.classList.add('show');
+                uploadZone.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearImage() {
+            selectedFile = null;
+            previewImage.src = '';
+            previewContainer.classList.remove('show');
+            uploadZone.style.display = 'block';
+            fileInput.value = '';
+            resultsContainer.classList.remove('show');
+            emptyState.style.display = 'block';
+        }
+
+        // Process OCR
+        async function processOCR() {
+            if (!selectedFile) {
+                showToast('Vui lòng chọn ảnh!', 'error');
+                return;
+            }
+            if (!apiUrl) {
+                showToast('Vui lòng kết nối URL Backend trước!', 'error');
+                return;
+            }
+
+            // Start loading
+            loading.classList.add('show');
+            processBtn.disabled = true;
+            emptyState.style.display = 'none';
+            resultsContainer.classList.remove('show');
+
+            // Start timer
+            loadingSeconds = 0;
+            loadingTime.textContent = '0.0s';
+            loadingTimer = setInterval(() => {
+                loadingSeconds += 0.1;
+                loadingTime.textContent = loadingSeconds.toFixed(1) + 's';
+            }, 100);
+
+            try {
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+
+                const response = await fetch(`${apiUrl}/api/ocr`, {
+                    method: 'POST',
+                    headers: { 'ngrok-skip-browser-warning': 'true' },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(result.data);
+                    showToast(`Thành công! Xử lý trong ${result.data.processing_time || loadingSeconds.toFixed(1)}s`, 'success');
+                } else {
+                    showToast(`Lỗi: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showToast(`Lỗi: ${error.message}`, 'error');
+            } finally {
+                clearInterval(loadingTimer);
+                loading.classList.remove('show');
+                processBtn.disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            resultsContainer.classList.add('show');
+
+            // Processing time
+            document.getElementById('result-time').textContent = 
+                (data.processing_time || loadingSeconds.toFixed(1)) + 's';
+
+            // Missing Fields
+            const missingAlert = document.getElementById('missing-alert');
+            const missingList = document.getElementById('missing-list');
+            
+            if (data.missing_fields && data.missing_fields.length > 0) {
+                missingAlert.style.display = 'block';
+                missingList.innerHTML = data.missing_fields
+                    .map(field => `<li>${fieldNames[field] || field}</li>`)
+                    .join('');
+            } else {
+                missingAlert.style.display = 'none';
+            }
+
+            // Store Info
+            const storeInfo = document.getElementById('store-info');
+            const storeFields = ['store_name', 'address', 'date', 'staff_name', 'staff_id'];
+            storeInfo.innerHTML = storeFields.map(field => {
+                const value = data.extracted_data[field];
+                const isMissing = !value || value === null;
+                return `
+                    <div class="result-field ${isMissing ? 'missing' : ''}">
+                        <span class="label">${fieldNames[field]}:</span>
+                        <span class="value">${isMissing ? 'Không tìm thấy' : value}</span>
+                        ${isMissing ? '<span class="missing-badge">Thiếu</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Line Items
+            const lineItems = document.getElementById('line-items');
+            const items = data.extracted_data.line_items || [];
+            
+            if (items.length > 0) {
+                lineItems.innerHTML = `
+                    <table class="line-items-table">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>SL</th>
+                                <th>Đơn giá</th>
+                                <th>Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map(item => `
+                                <tr>
+                                    <td>${item.product_name || '-'}</td>
+                                    <td>${item.quantity || '-'}</td>
+                                    <td>${formatNumber(item.unit_price)}</td>
+                                    <td>${formatNumber(item.total_price)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                lineItems.innerHTML = `
+                    <div class="result-field missing">
+                        <span class="value">Không tìm thấy sản phẩm</span>
+                        <span class="missing-badge">Thiếu</span>
+                    </div>
+                `;
+            }
+
+            // Total
+            const totalInfo = document.getElementById('total-info');
+            const total = data.extracted_data.total;
+            const isTotalMissing = !total || total === null;
+            totalInfo.innerHTML = `
+                <div class="result-field ${isTotalMissing ? 'missing' : ''}" style="font-size: 1.2rem;">
+                    <span class="label">Tổng:</span>
+                    <span class="value" style="font-weight: bold; ${!isTotalMissing ? 'color: #48bb78;' : ''}">
+                        ${isTotalMissing ? 'Không tìm thấy' : formatNumber(total)}
+                    </span>
+                    ${isTotalMissing ? '<span class="missing-badge">Thiếu</span>' : ''}
+                </div>
+            `;
+
+            // Annotated Image
+            if (data.annotated_image) {
+                document.getElementById('annotated-image').src = 
+                    `data:image/jpeg;base64,${data.annotated_image}`;
+            }
+
+            // Raw Text
+            document.getElementById('raw-text').textContent = data.raw_text || 'Không có dữ liệu';
+        }
+
+        function formatNumber(num) {
+            if (num === null || num === undefined || num === '-') return '-';
+            return new Intl.NumberFormat('vi-VN').format(num);
+        }
+
+        // Tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        // Toast
+        function showToast(message, type) {
+            toast.textContent = message;
+            toast.className = `toast show ${type}`;
+            setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+    </script>
+</body>
+</html>
