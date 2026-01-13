@@ -1,5 +1,16 @@
 # Enhancing the Efficiency of Invoice Information Recognition Systems  
 *(Nâng Cao Hiệu Quả Hệ Thống Nhận Diện Thông Tin Hóa Đơn*)
+
+![CRAFT](https://img.shields.io/badge/CRAFT-Text%20Detection-blueviolet)
+![Llama 3.1](https://img.shields.io/badge/Llama%203.1-LLM-blue?logo=meta)
+![Tesseract OCR](https://img.shields.io/badge/Tesseract-4.0%2B%20OCR-lightgrey?logo=tesseract)
+![OpenCV](https://img.shields.io/badge/OpenCV-Image%20Processing-green?logo=opencv)
+![Flask](https://img.shields.io/badge/Flask-Backend-black?logo=flask)
+![Flask--CORS](https://img.shields.io/badge/Flask--CORS-API%20Support-lightgrey)
+![Google Colab](https://img.shields.io/badge/Google%20Colab-Pro-orange?logo=googlecolab)
+![Pyngrok](https://img.shields.io/badge/Pyngrok-Public%20API-blue?logo=ngrok)
+---
+
 ### Using Object Detection and Semantic Extraction Models  
 *(Ứng dụng Mô hình Phát hiện Đối tượng và Trích xuất Ngữ nghĩa*)
 
@@ -16,10 +27,7 @@ By integrating **Computer Vision** techniques with **Generative AI / Large Langu
 
 
 
-
-
-
-### Key Objectives *(Mục tiêu chính*)
+### Key Objectives | Mục tiêu chính
 
 - **Automation | Tự động hóa:** Convert invoice images into structured JSON data.  
 - **High Accuracy | Độ chính xác cao:** Improve Vietnamese text and tabular data extraction compared to Regex-based OCR.  
@@ -49,21 +57,17 @@ The system employs **CRAFT (Character Region Awareness for Text Detection)** to 
 ---
 
 ### Stage 2: Text Recognition – Tesseract OCR  
-### Giai đoạn 2: Nhận dạng ký tự – Tesseract OCR
+*(Giai đoạn 2: Nhận dạng ký tự – Tesseract OCR*)
 
-**English**
+Detected text regions are processed by **Tesseract OCR (LSTM-based)**:   
+*(Các vùng văn bản sau khi phát hiện được đưa vào **Tesseract OCR**:)*
+- Performs **local OCR** on each cropped region.      
+   *(Thực hiện OCR cục bộ trên từng vùng ảnh.)*
+- Optimized for Vietnamese language (`lang='vie'`, `--psm 6`).      
+   *(Tối ưu cho tiếng Việt (`lang='vie'`, `--psm 6`).)*
+- Applies confidence-based filtering (threshold ≥ 70%).    
+  *(Loại bỏ kết quả có độ tin cậy thấp (< 70%).)*
 
-Detected text regions are processed by **Tesseract OCR (LSTM-based)**:
-- Performs **local OCR** on each cropped region.
-- Optimized for Vietnamese language (`lang='vie'`, `--psm 6`).
-- Applies confidence-based filtering (threshold ≥ 70%).
-
-**Tiếng Việt**
-
-Các vùng văn bản sau khi phát hiện được đưa vào **Tesseract OCR**:
-- Thực hiện OCR cục bộ trên từng vùng ảnh.
-- Tối ưu cho tiếng Việt (`lang='vie'`, `--psm 6`).
-- Loại bỏ kết quả có độ tin cậy thấp (< 70%).
 
 **Preprocessing Techniques | Tiền xử lý:**
 - CLAHE (contrast enhancement)
@@ -73,21 +77,17 @@ Các vùng văn bản sau khi phát hiện được đưa vào **Tesseract OCR**
 ---
 
 ### Stage 3: Semantic Extraction – Llama 3.1  
-### Giai đoạn 3: Trích xuất ngữ nghĩa – Llama 3.1
+*(Giai đoạn 3: Trích xuất ngữ nghĩa – Llama 3.1*)
 
-**English**
+A Large Language Model (**Llama-3.1-8B-Instruct**) is used to:  
+*(Mô hình ngôn ngữ lớn **Llama 3.1 (8B-Instruct)** đóng vai trò phân tích ngữ nghĩa:)*
+- Understand invoice context.   
+   *(Hiểu ngữ cảnh hóa đơn.)*
+- Correct OCR spelling and layout errors.   
+   *(Sửa lỗi OCR.)*
+- Convert unstructured text into standardized **JSON**.    
+   *(Chuẩn hóa dữ liệu đầu ra dưới dạng **JSON**.)*
 
-A Large Language Model (**Llama-3.1-8B-Instruct**) is used to:
-- Understand invoice context.
-- Correct OCR spelling and layout errors.
-- Convert unstructured text into standardized **JSON**.
-
-**Tiếng Việt**
-
-Mô hình ngôn ngữ lớn **Llama 3.1 (8B-Instruct)** đóng vai trò phân tích ngữ nghĩa:
-- Hiểu ngữ cảnh hóa đơn.
-- Sửa lỗi OCR.
-- Chuẩn hóa dữ liệu đầu ra dưới dạng **JSON**.
 
 **Standard Output Fields | Trường dữ liệu chuẩn hóa:**
 - Store Name | Tên cửa hàng  
@@ -98,8 +98,7 @@ Mô hình ngôn ngữ lớn **Llama 3.1 (8B-Instruct)** đóng vai trò phân t�
 
 ---
 
-## 3. Workflow & Technology Stack  
-## Quy trình xử lý & Công nghệ sử dụng
+## 3. Workflow & Technology Stack *(Quy trình xử lý & Công nghệ sử dụng*)
 
 ### Processing Strategy | Chiến lược xử lý
 
@@ -120,11 +119,11 @@ Mô hình ngôn ngữ lớn **Llama 3.1 (8B-Instruct)** đóng vai trò phân t�
 
 ---
 
-## 4. Experimental Results | Kết quả thực nghiệm
+## 4. Experimental Results *(Kết quả thực nghiệm*)
 
-The system was evaluated on **1,250 Vietnamese invoice images** and compared with a Regex-based baseline.
+The system was evaluated on **1,250 Vietnamese invoice images** and compared with a Regex-based baseline.   
 
-Hệ thống được đánh giá trên **1.250 hóa đơn tiếng Việt**, so sánh với hệ thống OCR truyền thống.
+ *(Hệ thống được đánh giá trên **1.250 hóa đơn tiếng Việt**, so sánh với hệ thống OCR truyền thống.*)
 
 | Criteria / Tiêu chí | Baseline (Regex) | Proposed System | Improvement |
 | --- | --- | --- | --- |
@@ -141,8 +140,7 @@ Hệ thống được đánh giá trên **1.250 hóa đơn tiếng Việt**, so 
 
 ---
 
-## 5. Installation & API Usage  
-## Hướng dẫn cài đặt & sử dụng
+## 5. Installation & API Usage  *(Hướng dẫn cài đặt & sử dụng*)
 
 ### System Requirements | Yêu cầu hệ thống
 - Python, PyTorch (GPU support)
@@ -154,7 +152,7 @@ Hệ thống được đánh giá trên **1.250 hóa đơn tiếng Việt**, so 
 
 ---
 
-## 6. Future Roadmap | Hướng phát triển
+## 6. Future Roadmap *(Hướng phát triển*)
 
 - **Speed Optimization | Tối ưu tốc độ:** Quantization (4-bit), TensorRT, ONNX Runtime  
 - **Image Enhancement | Cải thiện ảnh:** Dewarping, Super-Resolution  
@@ -163,7 +161,7 @@ Hệ thống được đánh giá trên **1.250 hóa đơn tiếng Việt**, so 
 
 ---
 
-## Authors | Nhóm thực hiện
+## Authors *(Nhóm thực hiện*)
 
 - **Students | Sinh viên:** Huỳnh Thái Linh, Hồ Gia Thành, Trương Minh Khoa  
 - **Supervisor | Giảng viên:** ThS. Nguyễn Quang Phúc  
